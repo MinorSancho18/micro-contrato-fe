@@ -234,6 +234,13 @@ function calcularDias() {
     }
 }
 
+function calcularDiasDeUso(fechaInicio, fechaFin) {
+    const inicio = new Date(fechaInicio);
+    const fin = new Date(fechaFin);
+    const dias = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24));
+    return dias > 0 ? dias : 1;
+}
+
 async function editarContrato(id) {
     try {
         const response = await $.get(`/Contratos/Obtener?id=${id}`);
@@ -274,17 +281,19 @@ async function verDetalle(id) {
 }
 
 function mostrarDetalle(detalle) {
-    $('#detalleIdContrato').text(detalle.idContrato);
-    $('#detalleCliente').text(detalle.nombreCliente);
-    $('#detalleFechaRecogida').text(new Date(detalle.fechaRecogida).toLocaleString('es-CR'));
-    $('#detalleFechaDevolucion').text(new Date(detalle.fechaDevolucion).toLocaleString('es-CR'));
-    $('#detalleSucursal').text(detalle.nombreSucursal);
-    $('#detalleUsuario').text(detalle.nombreUsuario);
-    $('#detalleEstado').text(detalle.descripcionEstado);
-    $('#detalleMontoTotal').text('₡' + parseFloat(detalle.montoTotal).toFixed(2));
-    $('#detalleSaldo').text('₡' + parseFloat(detalle.saldo).toFixed(2));
-    $('#detalleConfirmado').html(detalle.confirmado ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-warning">No</span>');
-    $('#detalleGarantia').html(detalle.garantiaAprobada ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-warning">No</span>');
+    const contrato = detalle.contrato;
+    
+    $('#detalleIdContrato').text(contrato.idContrato);
+    $('#detalleCliente').text(contrato.nombreCliente);
+    $('#detalleFechaRecogida').text(new Date(contrato.fechaRecogida).toLocaleString('es-CR'));
+    $('#detalleFechaDevolucion').text(new Date(contrato.fechaDevolucion).toLocaleString('es-CR'));
+    $('#detalleSucursal').text(contrato.idSucursal);
+    $('#detalleUsuario').text(contrato.idUsuario);
+    $('#detalleEstado').text(contrato.descripcionEstado);
+    $('#detalleMontoTotal').text('₡' + parseFloat(contrato.montoTotal).toFixed(2));
+    $('#detalleSaldo').text('₡' + parseFloat(contrato.saldo).toFixed(2));
+    $('#detalleConfirmado').html(contrato.confirmado ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-warning">No</span>');
+    $('#detalleGarantia').html(contrato.garantiaAprobada ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-warning">No</span>');
 
     const tbodyVehiculos = $('#tablaVehiculos tbody');
     tbodyVehiculos.empty();
@@ -295,9 +304,9 @@ function mostrarDetalle(detalle) {
         
         tbodyVehiculos.append(`
             <tr>
-                <td>${v.placa}</td>
-                <td>${v.modelo}</td>
-                <td>₡${parseFloat(v.tarifaDiaria).toFixed(2)}</td>
+                <td>${v.descripcionVehiculo}</td>
+                <td>${v.diasDeUso}</td>
+                <td>₡${parseFloat(v.costoDiario).toFixed(2)}</td>
                 <td>₡${parseFloat(v.subtotal).toFixed(2)}</td>
                 <td>${v.inspeccionado ? 'Sí' : 'No'}</td>
                 <td>${btnInspeccionar}</td>
@@ -310,21 +319,21 @@ function mostrarDetalle(detalle) {
     detalle.extras.forEach(e => {
         tbodyExtras.append(`
             <tr>
-                <td>${e.descripcion}</td>
-                <td>₡${parseFloat(e.costo).toFixed(2)}</td>
-                <td>${e.cantidad}</td>
+                <td>${e.descripcionExtra}</td>
+                <td>${e.diasDeUso}</td>
+                <td>₡${parseFloat(e.costoDiario).toFixed(2)}</td>
                 <td>₡${parseFloat(e.subtotal).toFixed(2)}</td>
             </tr>
         `);
     });
 
-    configurarBotonesDetalle(detalle);
+    configurarBotonesDetalle(contrato);
 }
 
-function configurarBotonesDetalle(detalle) {
-    const puedeAgregarVehiculos = !detalle.confirmado;
-    const puedeConfirmar = !detalle.confirmado && detalle.vehiculos.length > 0 && detalle.vehiculos.every(v => v.inspeccionado);
-    const puedeIniciar = detalle.confirmado && detalle.idEstado === 1;
+function configurarBotonesDetalle(contrato) {
+    const puedeAgregarVehiculos = !contrato.confirmado;
+    const puedeConfirmar = !contrato.confirmado;
+    const puedeIniciar = contrato.confirmado && contrato.idEstado === 2; // Estado "Reservado"
 
     $('#btnAgregarVehiculo').prop('disabled', !puedeAgregarVehiculos);
     $('#btnAgregarExtra').prop('disabled', !puedeAgregarVehiculos);
@@ -332,13 +341,17 @@ function configurarBotonesDetalle(detalle) {
     $('#btnIniciarContrato').prop('disabled', !puedeIniciar);
 }
 
+let vehiculosDisponibles = [];
+let extrasDisponibles = [];
+
 async function mostrarModalAgregarVehiculo() {
     try {
         const response = await $.get('/Contratos/ObtenerVehiculos');
         if (response.success) {
+            vehiculosDisponibles = response.data;
             $('#selectVehiculo').html('<option value="">Seleccione...</option>');
             $('#selectVehiculo').append(response.data.map(v =>
-                `<option value="${v.idVehiculo}">${v.placa} - ${v.modelo} (₡${v.tarifaDiaria})</option>`
+                `<option value="${v.idVehiculo}" data-descripcion="${v.descripcion}" data-costo="${v.costo}">${v.descripcion} (₡${v.costo})</option>`
             ).join(''));
             $('#modalAgregarVehiculo').modal('show');
         }
@@ -354,16 +367,31 @@ async function agregarVehiculo() {
         return;
     }
 
+    const vehiculo = vehiculosDisponibles.find(v => v.idVehiculo == idVehiculo);
+    if (!vehiculo) {
+        Swal.fire('Error', 'Vehículo no encontrado', 'error');
+        return;
+    }
+
+    const diasDeUso = calcularDiasDeUso(contratoActual.contrato.fechaRecogida, contratoActual.contrato.fechaDevolucion);
+
     try {
         const response = await $.ajax({
-            url: `/Contratos/AgregarVehiculo?idContrato=${contratoActual.idContrato}&idVehiculo=${idVehiculo}`,
-            method: 'POST'
+            url: `/Contratos/AgregarVehiculo`,
+            method: 'POST',
+            data: {
+                idContrato: contratoActual.contrato.idContrato,
+                idVehiculo: idVehiculo,
+                descripcionVehiculo: vehiculo.descripcion,
+                diasDeUso: diasDeUso,
+                costoDiario: vehiculo.costo
+            }
         });
 
         if (response.success) {
             Swal.fire('Éxito', 'Vehículo agregado correctamente', 'success');
             $('#modalAgregarVehiculo').modal('hide');
-            verDetalle(contratoActual.idContrato);
+            verDetalle(contratoActual.contrato.idContrato);
         } else {
             Swal.fire('Error', response.message, 'error');
         }
@@ -376,11 +404,12 @@ async function mostrarModalAgregarExtra() {
     try {
         const response = await $.get('/Contratos/ObtenerExtras');
         if (response.success) {
+            extrasDisponibles = response.data;
             $('#selectExtra').html('<option value="">Seleccione...</option>');
             $('#selectExtra').append(response.data.map(e =>
-                `<option value="${e.idExtra}">${e.descripcion} (₡${e.costo})</option>`
+                `<option value="${e.idExtra}" data-descripcion="${e.descripcion}" data-costo="${e.costo}">${e.descripcion} (₡${e.costo})</option>`
             ).join(''));
-            $('#cantidadExtra').val(1);
+            $('#diasDeUsoExtra').val(1);
             $('#modalAgregarExtra').modal('show');
         }
     } catch (error) {
@@ -390,23 +419,41 @@ async function mostrarModalAgregarExtra() {
 
 async function agregarExtra() {
     const idExtra = $('#selectExtra').val();
-    const cantidad = $('#cantidadExtra').val();
+    const diasDeUso = parseInt($('#diasDeUsoExtra').val());
     
     if (!idExtra) {
         Swal.fire('Advertencia', 'Debe seleccionar un extra', 'warning');
         return;
     }
 
+    if (!diasDeUso || diasDeUso < 1) {
+        Swal.fire('Advertencia', 'Días de uso debe ser mayor a 0', 'warning');
+        return;
+    }
+
+    const extra = extrasDisponibles.find(e => e.idExtra == idExtra);
+    if (!extra) {
+        Swal.fire('Error', 'Extra no encontrado', 'error');
+        return;
+    }
+
     try {
         const response = await $.ajax({
-            url: `/Contratos/AgregarExtra?idContrato=${contratoActual.idContrato}&idExtra=${idExtra}&cantidad=${cantidad}`,
-            method: 'POST'
+            url: `/Contratos/AgregarExtra`,
+            method: 'POST',
+            data: {
+                idContrato: contratoActual.contrato.idContrato,
+                idExtra: idExtra,
+                descripcionExtra: extra.descripcion,
+                diasDeUso: diasDeUso,
+                costoDiario: extra.costo
+            }
         });
 
         if (response.success) {
             Swal.fire('Éxito', 'Extra agregado correctamente', 'success');
             $('#modalAgregarExtra').modal('hide');
-            verDetalle(contratoActual.idContrato);
+            verDetalle(contratoActual.contrato.idContrato);
         } else {
             Swal.fire('Error', response.message, 'error');
         }
@@ -416,15 +463,21 @@ async function agregarExtra() {
 }
 
 async function marcarInspeccionado(idVehiculoContrato) {
+    const idUsuario = contratoActual.contrato.idUsuario;
+    
     try {
         const response = await $.ajax({
-            url: `/Contratos/MarcarVehiculoInspeccionado?idVehiculoContrato=${idVehiculoContrato}`,
-            method: 'PUT'
+            url: `/Contratos/MarcarVehiculoInspeccionado`,
+            method: 'PUT',
+            data: {
+                idVehiculoContrato: idVehiculoContrato,
+                idUsuario: idUsuario
+            }
         });
 
         if (response.success) {
             Swal.fire('Éxito', 'Vehículo marcado como inspeccionado', 'success');
-            verDetalle(contratoActual.idContrato);
+            verDetalle(contratoActual.contrato.idContrato);
         } else {
             Swal.fire('Error', response.message, 'error');
         }
@@ -446,13 +499,17 @@ async function confirmarContrato() {
     if (result.isConfirmed) {
         try {
             const response = await $.ajax({
-                url: `/Contratos/Confirmar?id=${contratoActual.idContrato}`,
-                method: 'PUT'
+                url: `/Contratos/Confirmar`,
+                method: 'PUT',
+                data: {
+                    id: contratoActual.contrato.idContrato,
+                    idUsuario: contratoActual.contrato.idUsuario
+                }
             });
 
             if (response.success) {
                 Swal.fire('Éxito', 'Contrato confirmado', 'success');
-                verDetalle(contratoActual.idContrato);
+                verDetalle(contratoActual.contrato.idContrato);
                 cargarContratos();
             } else {
                 Swal.fire('Error', response.message, 'error');
@@ -476,13 +533,17 @@ async function iniciarContrato() {
     if (result.isConfirmed) {
         try {
             const response = await $.ajax({
-                url: `/Contratos/Iniciar?id=${contratoActual.idContrato}`,
-                method: 'PUT'
+                url: `/Contratos/Iniciar`,
+                method: 'PUT',
+                data: {
+                    id: contratoActual.contrato.idContrato,
+                    idUsuario: contratoActual.contrato.idUsuario
+                }
             });
 
             if (response.success) {
                 Swal.fire('Éxito', 'Contrato iniciado', 'success');
-                verDetalle(contratoActual.idContrato);
+                verDetalle(contratoActual.contrato.idContrato);
                 cargarContratos();
             } else {
                 Swal.fire('Error', response.message, 'error');

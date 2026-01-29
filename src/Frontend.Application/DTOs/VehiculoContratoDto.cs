@@ -4,9 +4,9 @@ public sealed record VehiculoContratoDto(
     int IdVehiculoContrato,
     int IdContrato,
     int IdVehiculo,
-    string Placa,
-    string Modelo,
-    decimal TarifaDiaria,
+    string DescripcionVehiculo,
+    int DiasDeUso,
+    decimal CostoDiario,
     decimal Subtotal,
     bool Inspeccionado
 );

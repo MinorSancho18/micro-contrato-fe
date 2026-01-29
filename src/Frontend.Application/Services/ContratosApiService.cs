@@ -69,42 +69,59 @@ public class ContratosApiService : IContratosApiService
         return await response.Content.ReadFromJsonAsync<ContratoDto>() ?? throw new InvalidOperationException("Error al actualizar contrato");
     }
 
-    public async Task<VehiculoContratoDto> AgregarVehiculoAsync(int idContrato, int idVehiculo)
+    public async Task<VehiculoContratoDto> AgregarVehiculoAsync(int idContrato, int idVehiculo, string descripcionVehiculo, int diasDeUso, decimal costoDiario)
     {
         await ConfigurarAutenticacionAsync();
-        var request = new { IdVehiculo = idVehiculo };
+        var request = new 
+        { 
+            IdContrato = idContrato,
+            IdVehiculo = idVehiculo, 
+            DescripcionVehiculo = descripcionVehiculo,
+            DiasDeUso = diasDeUso,
+            CostoDiario = costoDiario
+        };
         var response = await _httpClient.PostAsJsonAsync($"{_apiSettings.ContratoApiBaseUrl}/api/Contratos/{idContrato}/vehiculos", request);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<VehiculoContratoDto>() ?? throw new InvalidOperationException("Error al agregar vehículo");
     }
 
-    public async Task<ExtraContratoDto> AgregarExtraAsync(int idContrato, int idExtra, int cantidad)
+    public async Task<ExtraContratoDto> AgregarExtraAsync(int idContrato, int idExtra, string descripcionExtra, int diasDeUso, decimal costoDiario)
     {
         await ConfigurarAutenticacionAsync();
-        var request = new { IdExtra = idExtra, Cantidad = cantidad };
+        var request = new 
+        { 
+            IdContrato = idContrato,
+            IdExtra = idExtra, 
+            DescripcionExtra = descripcionExtra,
+            DiasDeUso = diasDeUso,
+            CostoDiario = costoDiario
+        };
         var response = await _httpClient.PostAsJsonAsync($"{_apiSettings.ContratoApiBaseUrl}/api/Contratos/{idContrato}/extras", request);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<ExtraContratoDto>() ?? throw new InvalidOperationException("Error al agregar extra");
     }
 
-    public async Task MarcarVehiculoInspeccionadoAsync(int idVehiculoContrato)
+    public async Task MarcarVehiculoInspeccionadoAsync(int idVehiculoContrato, int idUsuario)
     {
         await ConfigurarAutenticacionAsync();
-        var response = await _httpClient.PutAsync($"{_apiSettings.ContratoApiBaseUrl}/api/Contratos/vehiculos/{idVehiculoContrato}/inspeccionar", null);
+        var request = new { IdVehiculoContrato = idVehiculoContrato, IdUsuario = idUsuario };
+        var response = await _httpClient.PostAsJsonAsync($"{_apiSettings.ContratoApiBaseUrl}/api/Contratos/vehiculos/{idVehiculoContrato}/marcar-inspeccionado", request);
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task ConfirmarContratoAsync(int idContrato)
+    public async Task ConfirmarContratoAsync(int idContrato, int idUsuario)
     {
         await ConfigurarAutenticacionAsync();
-        var response = await _httpClient.PutAsync($"{_apiSettings.ContratoApiBaseUrl}/api/Contratos/{idContrato}/confirmar", null);
+        var request = new { IdContrato = idContrato, IdUsuario = idUsuario };
+        var response = await _httpClient.PostAsJsonAsync($"{_apiSettings.ContratoApiBaseUrl}/api/Contratos/{idContrato}/confirmar", request);
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task IniciarContratoAsync(int idContrato)
+    public async Task IniciarContratoAsync(int idContrato, int idUsuario)
     {
         await ConfigurarAutenticacionAsync();
-        var response = await _httpClient.PutAsync($"{_apiSettings.ContratoApiBaseUrl}/api/Contratos/{idContrato}/iniciar", null);
+        var request = new { IdContrato = idContrato, IdUsuario = idUsuario };
+        var response = await _httpClient.PostAsJsonAsync($"{_apiSettings.ContratoApiBaseUrl}/api/Contratos/{idContrato}/iniciar", request);
         response.EnsureSuccessStatusCode();
     }
 }

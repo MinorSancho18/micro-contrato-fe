@@ -9,9 +9,9 @@ public interface IContratosApiService
     Task<ContratoDetalleDto?> ObtenerDetalleAsync(int id);
     Task<ContratoDto> CrearAsync(ContratoDto contrato);
     Task<ContratoDto> ActualizarAsync(int id, ContratoDto contrato);
-    Task<VehiculoContratoDto> AgregarVehiculoAsync(int idContrato, int idVehiculo);
-    Task<ExtraContratoDto> AgregarExtraAsync(int idContrato, int idExtra, int cantidad);
-    Task MarcarVehiculoInspeccionadoAsync(int idVehiculoContrato);
-    Task ConfirmarContratoAsync(int idContrato);
-    Task IniciarContratoAsync(int idContrato);
+    Task<VehiculoContratoDto> AgregarVehiculoAsync(int idContrato, int idVehiculo, string descripcionVehiculo, int diasDeUso, decimal costoDiario);
+    Task<ExtraContratoDto> AgregarExtraAsync(int idContrato, int idExtra, string descripcionExtra, int diasDeUso, decimal costoDiario);
+    Task MarcarVehiculoInspeccionadoAsync(int idVehiculoContrato, int idUsuario);
+    Task ConfirmarContratoAsync(int idContrato, int idUsuario);
+    Task IniciarContratoAsync(int idContrato, int idUsuario);
 }

@@ -4,8 +4,8 @@ public sealed record ExtraContratoDto(
     int IdExtraContrato,
     int IdContrato,
     int IdExtra,
-    string Descripcion,
-    decimal Costo,
-    int Cantidad,
+    string DescripcionExtra,
+    int DiasDeUso,
+    decimal CostoDiario,
     decimal Subtotal
 );

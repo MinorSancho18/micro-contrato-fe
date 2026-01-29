@@ -122,11 +122,11 @@ public class ContratosController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> AgregarVehiculo(int idContrato, int idVehiculo)
+    public async Task<IActionResult> AgregarVehiculo(int idContrato, int idVehiculo, string descripcionVehiculo, int diasDeUso, decimal costoDiario)
     {
         try
         {
-            var vehiculoContrato = await _contratosService.AgregarVehiculoAsync(idContrato, idVehiculo);
+            var vehiculoContrato = await _contratosService.AgregarVehiculoAsync(idContrato, idVehiculo, descripcionVehiculo, diasDeUso, costoDiario);
             return Json(new { success = true, data = vehiculoContrato });
         }
         catch (Exception ex)
@@ -137,11 +137,11 @@ public class ContratosController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> AgregarExtra(int idContrato, int idExtra, int cantidad)
+    public async Task<IActionResult> AgregarExtra(int idContrato, int idExtra, string descripcionExtra, int diasDeUso, decimal costoDiario)
     {
         try
         {
-            var extraContrato = await _contratosService.AgregarExtraAsync(idContrato, idExtra, cantidad);
+            var extraContrato = await _contratosService.AgregarExtraAsync(idContrato, idExtra, descripcionExtra, diasDeUso, costoDiario);
             return Json(new { success = true, data = extraContrato });
         }
         catch (Exception ex)
@@ -152,11 +152,11 @@ public class ContratosController : Controller
     }
 
     [HttpPut]
-    public async Task<IActionResult> MarcarVehiculoInspeccionado(int idVehiculoContrato)
+    public async Task<IActionResult> MarcarVehiculoInspeccionado(int idVehiculoContrato, int idUsuario)
     {
         try
         {
-            await _contratosService.MarcarVehiculoInspeccionadoAsync(idVehiculoContrato);
+            await _contratosService.MarcarVehiculoInspeccionadoAsync(idVehiculoContrato, idUsuario);
             return Json(new { success = true });
         }
         catch (Exception ex)
@@ -167,11 +167,11 @@ public class ContratosController : Controller
     }
 
     [HttpPut]
-    public async Task<IActionResult> Confirmar(int id)
+    public async Task<IActionResult> Confirmar(int id, int idUsuario)
     {
         try
         {
-            await _contratosService.ConfirmarContratoAsync(id);
+            await _contratosService.ConfirmarContratoAsync(id, idUsuario);
             return Json(new { success = true });
         }
         catch (Exception ex)
@@ -182,11 +182,11 @@ public class ContratosController : Controller
     }
 
     [HttpPut]
-    public async Task<IActionResult> Iniciar(int id)
+    public async Task<IActionResult> Iniciar(int id, int idUsuario)
     {
         try
         {
-            await _contratosService.IniciarContratoAsync(id);
+            await _contratosService.IniciarContratoAsync(id, idUsuario);
             return Json(new { success = true });
         }
         catch (Exception ex)
