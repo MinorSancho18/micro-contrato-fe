@@ -1,0 +1,244 @@
+@{
+    ViewData["Title"] = "Contratos";
+}
+
+<div class="container-fluid">
+    <h2 class="mb-4">Gestión de Contratos</h2>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="mb-0">Listado de Contratos</h5>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button type="button" class="btn btn-primary" id="btnNuevoContrato">
+                        <i class="bi bi-plus-circle"></i> Nuevo Contrato
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <table id="tablaContratos" class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Cliente</th>
+                        <th>Fecha Recogida</th>
+                        <th>Fecha Devolución</th>
+                        <th>Estado</th>
+                        <th>Monto Total</th>
+                        <th>Saldo</th>
+                        <th>Confirmado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear/Editar Contrato -->
+<div class="modal fade" id="modalContrato" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalContratoTitulo">Nuevo Contrato</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formContrato">
+                    <input type="hidden" id="idContrato" />
+                    
+                    <div class="mb-3">
+                        <label for="idCliente" class="form-label">Cliente *</label>
+                        <select class="form-select" id="idCliente" required>
+                            <option value="">Seleccione un cliente</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fechaRecogida" class="form-label">Fecha Recogida *</label>
+                        <input type="datetime-local" class="form-control" id="fechaRecogida" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fechaDevolucion" class="form-label">Fecha Devolución *</label>
+                        <input type="datetime-local" class="form-control" id="fechaDevolucion" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="idSucursal" class="form-label">Sucursal *</label>
+                        <select class="form-select" id="idSucursal" required>
+                            <option value="">Seleccione una sucursal</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="idUsuario" class="form-label">Usuario *</label>
+                        <select class="form-select" id="idUsuario" required>
+                            <option value="">Seleccione un usuario</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="idEstado" class="form-label">Estado *</label>
+                        <select class="form-select" id="idEstado" required>
+                            <option value="">Seleccione un estado</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="montoTotal" class="form-label">Monto Total</label>
+                        <input type="number" step="0.01" class="form-control" id="montoTotal" value="0" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="saldo" class="form-label">Saldo</label>
+                        <input type="number" step="0.01" class="form-control" id="saldo" value="0" />
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="garantiaAprobada" />
+                        <label class="form-check-label" for="garantiaAprobada">Garantía Aprobada</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnGuardarContrato">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalle Contrato -->
+<div class="modal fade" id="modalDetalle" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalle del Contrato</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>ID Contrato:</strong> <span id="detalleIdContrato"></span></p>
+                        <p><strong>Cliente:</strong> <span id="detalleCliente"></span></p>
+                        <p><strong>Fecha Recogida:</strong> <span id="detalleFechaRecogida"></span></p>
+                        <p><strong>Fecha Devolución:</strong> <span id="detalleFechaDevolucion"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Sucursal:</strong> <span id="detalleSucursal"></span></p>
+                        <p><strong>Usuario:</strong> <span id="detalleUsuario"></span></p>
+                        <p><strong>Estado:</strong> <span id="detalleEstado"></span></p>
+                        <p><strong>Monto Total:</strong> <span id="detalleMontoTotal"></span></p>
+                        <p><strong>Saldo:</strong> <span id="detalleSaldo"></span></p>
+                        <p><strong>Confirmado:</strong> <span id="detalleConfirmado"></span></p>
+                        <p><strong>Garantía Aprobada:</strong> <span id="detalleGarantia"></span></p>
+                    </div>
+                </div>
+
+                <h5>Vehículos</h5>
+                <div class="mb-3">
+                    <button type="button" class="btn btn-sm btn-success mb-2" id="btnAgregarVehiculo">
+                        Agregar Vehículo
+                    </button>
+                    <table class="table table-sm table-bordered" id="tablaVehiculos">
+                        <thead>
+                            <tr>
+                                <th>Placa</th>
+                                <th>Modelo</th>
+                                <th>Tarifa Diaria</th>
+                                <th>Subtotal</th>
+                                <th>Inspeccionado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <h5>Extras</h5>
+                <div class="mb-3">
+                    <button type="button" class="btn btn-sm btn-success mb-2" id="btnAgregarExtra">
+                        Agregar Extra
+                    </button>
+                    <table class="table table-sm table-bordered" id="tablaExtras">
+                        <thead>
+                            <tr>
+                                <th>Descripción</th>
+                                <th>Costo</th>
+                                <th>Cantidad</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" id="btnConfirmarContrato">Confirmar Contrato</button>
+                <button type="button" class="btn btn-success" id="btnIniciarContrato">Iniciar Contrato</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Agregar Vehículo -->
+<div class="modal fade" id="modalAgregarVehiculo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar Vehículo al Contrato</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="selectVehiculo" class="form-label">Seleccione un vehículo</label>
+                    <select class="form-select" id="selectVehiculo">
+                        <option value="">Seleccione...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmarAgregarVehiculo">Agregar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Agregar Extra -->
+<div class="modal fade" id="modalAgregarExtra" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar Extra al Contrato</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="selectExtra" class="form-label">Seleccione un extra</label>
+                    <select class="form-select" id="selectExtra">
+                        <option value="">Seleccione...</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="cantidadExtra" class="form-label">Cantidad</label>
+                    <input type="number" class="form-control" id="cantidadExtra" value="1" min="1" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmarAgregarExtra">Agregar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/contratos.js" asp-append-version="true"></script>
+}
