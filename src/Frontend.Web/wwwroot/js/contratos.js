@@ -20,26 +20,28 @@ function inicializarDataTable() {
             {
                 data: 'fechaRecogida',
                 render: function (data) {
-                    return new Date(data).toLocaleString('es-CR');
+                    return data ? new Date(data).toLocaleString('es-CR') : 'N/A';
                 }
             },
             {
                 data: 'fechaDevolucion',
                 render: function (data) {
-                    return new Date(data).toLocaleString('es-CR');
+                    return data ? new Date(data).toLocaleString('es-CR') : 'N/A';
                 }
             },
             { data: 'descripcionEstado' },
             {
                 data: 'montoTotal',
                 render: function (data) {
-                    return '₡' + parseFloat(data).toFixed(2);
+                    const monto = parseFloat(data);
+                    return '₡' + (isNaN(monto) ? 0 : monto).toFixed(2);
                 }
             },
             {
                 data: 'saldo',
                 render: function (data) {
-                    return '₡' + parseFloat(data).toFixed(2);
+                    const saldo = parseFloat(data);
+                    return '₡' + (isNaN(saldo) ? 0 : saldo).toFixed(2);
                 }
             },
             {
@@ -230,8 +232,10 @@ function calcularDias() {
     
     if (fechaRecogida && fechaDevolucion && fechaDevolucion > fechaRecogida) {
         const dias = Math.ceil((fechaDevolucion - fechaRecogida) / (1000 * 60 * 60 * 24));
-        console.log('Días calculados:', dias);
+        // Los días se pueden mostrar en la UI si es necesario
+        return dias;
     }
+    return 0;
 }
 
 function calcularDiasDeUso(fechaInicio, fechaFin) {

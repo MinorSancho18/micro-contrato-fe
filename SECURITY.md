@@ -56,6 +56,9 @@ public async Task<string> ObtenerTokenContratoAsync()
 ### Códigos de Autenticación (AuthCode)
 
 #### Configuración Actual (appsettings.json)
+
+**⚠️ NOTA:** Los valores mostrados son SOLO para desarrollo/demostración. En producción, estos deben ser reemplazados por valores seguros desde variables de entorno.
+
 ```json
 {
   "ApiSettings": {
